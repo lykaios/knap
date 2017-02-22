@@ -12,7 +12,7 @@ case class Item(value: Int, weight: Int, id: Int) {
 
 case class Knapsack(itemCount: Int, capacity: Int, items: List[Item]) {
   //block long operations
-  val TIMEOUT = 60 * 2
+  val TIMEOUT = 60 * 60
 
   def greedySearch(implicit ec: ExecutionContext): List[Item] = {
     def takeItem(cur: List[Item], localItems: List[Item], localCapacity: Int): List[Item] = {
@@ -23,7 +23,7 @@ case class Knapsack(itemCount: Int, capacity: Int, items: List[Item]) {
     }
 
     val densitySorted = items.sortBy(i => -i.density)
-    lazy val f = future { takeItem(List(), densitySorted, capacity) }
+    lazy val f = Future { takeItem(List(), densitySorted, capacity) }
 
     Await.result(f, Duration.create(TIMEOUT, "seconds"))
   }
