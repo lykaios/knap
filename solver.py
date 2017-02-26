@@ -16,8 +16,7 @@ def solve_it(input_data):
     # Runs the command: java Solver -file=tmp.data
 
     # scala Main.scala
-    # increase heap '-J-Xmx4g'
-    process = Popen(['scala', 'Main.scala', tmp_file_name], stdout=PIPE)
+    process = Popen(['scala', '-J-Xmx6g', 'Main.scala', tmp_file_name], stdout=PIPE)
     (stdout, stderr) = process.communicate()
 
     # removes the temporay file

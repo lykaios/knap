@@ -190,8 +190,14 @@ object Main extends App {
   val input = Parser.readFile(filePath)
   bw.append(s"-----\n${input.itemCount} cap: ${input.capacity}")
   //DP on small space
-  if (input.capacity < 10000 || input.itemCount <= 200) {
-    val knap = KnapDP(input.itemCount, input.capacity, input.items)
+  if (input.capacity <= 10000 || input.itemCount <= 200 || (input.itemCount == 1000 && input.capacity == 100000)){
+    val max = 1000000
+    //(input.capacity < 10000 || input.itemCount <= 200) {
+    val subsetItems = input.itemCount match {
+      case i if i > max => input.items.sortBy(i => -i.density).take(max)
+      case _ => input.items
+    }
+    val knap = KnapDP(input.itemCount, input.capacity, subsetItems)
     val result = knap.decideDp
     println(s"1 0")
     println(s"$result")
