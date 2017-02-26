@@ -25,6 +25,14 @@ abstract class Knapsack(itemCount: Int, capacity: Int, itemsIn: List[Item]) {
     s"$this\nitems: $itemsIn"
   }
 
+  def valueForItems(input: List[Item]): Int = {
+    input.map(i => i.value).sum
+  }
+
+  def outputForItems(results: List[Item]): String = {
+    itemsIn.map(i => if (results.contains(i)) 1 else 0).mkString(" ")
+  }
+
   override def toString: String = {
     s"$itemCount $capacity"
   }
@@ -56,9 +64,15 @@ case class KnapBB(itemCount: Int, capacity: Int, itemsIn: List[Item]) extends Kn
 
 
   def performRelaxedSearch: (Int, String) = {
-    val results = relaxedSearch(0, SearchObj(List()), capacity)
-    val output = itemsIn.map(i => if (results.contains(i)) 1 else 0).mkString(" ")
-    (results.map(i => i.value).sum, output)
+    val greedyResults = relaxedSearch(0, SearchObj(List()), capacity)
+    val greedyValue = valueForItems(greedyResults)
+    if (greedyValue > relaxationAt(1, capacity))
+      (greedyValue, outputForItems(greedyResults))
+    else {
+      val branch = relaxedSearch(1, SearchObj(List()), capacity)
+      (valueForItems(branch), outputForItems(branch))
+    }
+
   }
 
   def relaxedSearch(index: Int, cur: SearchObj, rCapacity: Int): List[Item] = {
@@ -81,7 +95,8 @@ case class KnapBB(itemCount: Int, capacity: Int, itemsIn: List[Item]) extends Kn
 
 case class KnapDP(itemCount: Int, capacity: Int, itemsIn: List[Item]) extends Knapsack(itemCount: Int, capacity: Int, itemsIn: List[Item]) {
 
-  val items = itemsIn.map(i => (i.id, i)).toMap
+  //offset one due to empty first column
+  val items = itemsIn.map(i => (i.id + 1, i)).toMap
   val table = fillTable
 
   def fillDynamicTable(arr: Array[Array[Int]], column: Int, k: Int): Array[Array[Int]] = {
@@ -131,8 +146,8 @@ case class KnapDP(itemCount: Int, capacity: Int, itemsIn: List[Item]) extends Kn
       decideTable(0 :: results, curCap, curItem - 1)
   }
 
-  def decideDp: List[Int] = {
-    decideTable(List(), capacity, items.size)
+  def decideDp: String = {
+    decideTable(List(), capacity, items.size).mkString(" ")
   }
 
   def printTable = {
@@ -161,6 +176,9 @@ object Parser {
 /*-------------------------------------------*/
 
 //invocation: scala Main.scala ks_1000_0
+//TODO:
+// * I think the issue is that we are not consiering the 'no' choices correctly for the objects (grader outputs required obj value for improvement)
+// * refactor to ensure DP works on small capacity
 
 object Main extends App {
 
@@ -170,23 +188,22 @@ object Main extends App {
 
   val filePath = args(0)
   val input = Parser.readFile(filePath)
-
-  //branch and bound > 100000
-  if (input.capacity > 0) {
+  bw.append(s"-----\n${input.itemCount} cap: ${input.capacity}")
+  //DP on small space
+  if (input.capacity < 10000 || input.itemCount <= 200) {
+    val knap = KnapDP(input.itemCount, input.capacity, input.items)
+    val result = knap.decideDp
+    println(s"1 0")
+    println(s"$result")
+  }
+  else {
     val knap = KnapBB(input.itemCount, input.capacity, input.items)
     //println(s"relax: ${knap.relaxationAt(0, knap.capacity)}")
     val relaxedResult = knap.performRelaxedSearch
     println(s"${relaxedResult._1} 0")
     println(s"${relaxedResult._2}")
   }
-  else {
-    println(s"should call DP methods")
-    //println(knap)
-    //val decided = knap.decideDp.mkString(" ")
-    //println(s"$decided")
-  }
 
-  //  bw.write(s"knapsack:\n${knap.fullPrint}")
   bw.close()
 }
 
